@@ -1,2 +1,7 @@
 # chatsocket-server
-A simple little websocket server for chatting.
+
+A simple very very little websocket server for chatting.
+
+### Usage
+
+Run server.js with Bun or NodeJS.
