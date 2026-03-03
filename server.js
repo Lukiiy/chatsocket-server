@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 import * as Events from "./event.js";
 import * as Users from "./user.js";
 
-const PORT = 3001;
+const PORT = 2579;
 const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
 
 let badWordPatterns = [];
