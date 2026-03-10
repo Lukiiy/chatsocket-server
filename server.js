@@ -8,9 +8,7 @@ const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
 let badWordPatterns = [];
 
 try {
-    const raw = readFileSync("./badwords.txt", "utf8");
-    badWordPatterns = raw
-        .split("\n")
+    badWordPatterns = readFileSync("./badwords.txt", "utf8").split("\n")
         .map((l) => l.trim())
         .filter((l) => l && !l.startsWith("#"))
         .map((pattern) => new RegExp(pattern, "gi"));
@@ -109,7 +107,7 @@ const server = Bun.serve({
             }
 
             if (msg.type === "register") {
-                if (Users.clients.has(ws)) {
+                if (Users.getClients().has(ws)) {
                     Users.kick(ws, "Already registered.");
                     return;
                 }
@@ -121,7 +119,7 @@ const server = Bun.serve({
             }
 
             if (msg.type === "message") {
-                const client = Users.clients.get(ws);
+                const client = Users.getClients().get(ws);
                 if (!client) {
                     Users.kick(ws, "Not registered.");
                     return;

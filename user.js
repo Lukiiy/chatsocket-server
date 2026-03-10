@@ -1,6 +1,28 @@
 import { fireEvent } from "./event.js";
 
-export const clients = new Map(); // websocket ( user, joinedAt )
+const clients = new Map(); // websocket ( user, joinedAt )
+
+export function getClients() {
+    return new Map(clients);
+}
+
+export function getAllUsers() {
+    return [...clients.values()];
+}
+
+export function formatUserList() {
+    const users = getAllUsers();
+
+    return `Online (${users.length}): ${users.map(u => u.name).join(", ")}`;
+}
+
+export function broadcast(payload, exclude = null) {
+    const msg = JSON.stringify(payload);
+
+    for (const [ws] of clients) {
+        if (ws !== exclude && ws.readyState === 1) ws.send(msg);
+    }
+}
 
 export function kick(ws, reason = "Kicked from server.") {
     try {
@@ -13,24 +35,6 @@ export function kick(ws, reason = "Kicked from server.") {
     try {
         ws.close();
     } catch { }
-}
-
-export function broadcast(payload, exclude = null) {
-    const msg = JSON.stringify(payload);
-
-    for (const [ws] of clients) {
-        if (ws !== exclude && ws.readyState === 1) ws.send(msg);
-    }
-}
-
-export function sendUserList(ws) {
-    const names = [...clients.values()].map((c) => c.name);
-    const payload = {
-        type: "userlist",
-        users: names
-    };
-
-    return sendToClient(ws, payload);
 }
 
 export function sendToClient(ws, payload) {
@@ -64,7 +68,7 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
 
     if (name.length === 0 || !NAME_REGEX.test(name)) {
         kick(ws, "Name must be 3–24 characters and contain only letters, numbers and underscore.");
-        
+
         return false;
     }
 
@@ -75,7 +79,10 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
         return false;
     }
 
-    clients.set(ws, { name, joinedAt: Date.now() });
+    clients.set(ws, {
+        name,
+        joinedAt: Date.now()
+    });
 
     const joinEv = fireEvent("player.join", { name, ws });
     if (joinEv.isCancelled()) {
@@ -85,7 +92,11 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
         return false;
     }
 
-    sendUserList(ws);
+    sendToClient(ws, {
+        type: "server",
+        text: formatUserList()
+    });
+
     return true;
 }
 
