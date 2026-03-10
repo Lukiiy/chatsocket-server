@@ -96,9 +96,7 @@ const server = Bun.serve({
     websocket: {
         perMessageDeflate: true,
 
-        open(ws) {
-            ws.send(JSON.stringify({ type: "need_name" }));
-        },
+        open(ws) {},
 
         message(ws, raw) {
             let msg;
@@ -106,13 +104,13 @@ const server = Bun.serve({
             try {
                 msg = JSON.parse(raw);
             } catch {
-                ws.send(JSON.stringify({ type: "error", text: "Invalid JSON." }));
+                Users.kick(ws, "Invalid JSON.");
                 return;
             }
 
             if (msg.type === "register") {
                 if (Users.clients.has(ws)) {
-                    ws.send(JSON.stringify({ type: "error", text: "Already registered." }));
+                    Users.kick(ws, "Already registered.");
                     return;
                 }
 
@@ -125,11 +123,16 @@ const server = Bun.serve({
             if (msg.type === "message") {
                 const client = Users.clients.get(ws);
                 if (!client) {
-                    ws.send(JSON.stringify({ type: "error", text: "Not registered." }));
+                    Users.kick(ws, "Not registered.");
                     return;
                 }
 
-                const evData = { name: client.name, text: msg.text ?? "", deleted: false };
+                const evData = {
+                    name: client.name,
+                    text: msg.text ?? "",
+                    deleted: false
+                };
+
                 const msgEvent = Events.fireEvent("player.message", evData);
                 if (msgEvent.isCancelled()) return;
 
@@ -144,7 +147,7 @@ const server = Bun.serve({
                 return;
             }
 
-            ws.send(JSON.stringify({ type: "error", text: "Unknown message type." }));
+            Users.kick(ws, "Unknown message type.");
         },
 
         close(ws) {

@@ -2,6 +2,19 @@ import { fireEvent } from "./event.js";
 
 export const clients = new Map(); // websocket ( user, joinedAt )
 
+export function kick(ws, reason = "Kicked from server.") {
+    try {
+        ws.send(JSON.stringify({
+            type: "kick",
+            reason
+        }));
+    } catch { }
+
+    try {
+        ws.close();
+    } catch { }
+}
+
 export function broadcast(payload, exclude = null) {
     const msg = JSON.stringify(payload);
 
@@ -53,57 +66,22 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
     }
 
     if (name.length === 0 || !NAME_REGEX.test(name)) {
-        ws.send(
-            JSON.stringify({
-                type: "name_rejected",
-                reason: "Name must be 3–24 characters and contain only letters, numbers and underscore.",
-            })
-        );
-
-        try {
-            ws.close();
-        } catch { }
-
+        kick(ws, "Name must be 3–24 characters and contain only letters, numbers and underscore.");
         return false;
     }
 
     const taken = [...clients.values()].some((c) => c.name.toLowerCase() === name.toLowerCase());
     if (taken) {
-        ws.send(
-            JSON.stringify({
-                type: "name_rejected",
-                reason: "Name already taken.",
-            })
-        );
-
-        try {
-            ws.close();
-        } catch { }
-
+        kick(ws, "Name already taken.");
         return false;
     }
 
     clients.set(ws, { name, joinedAt: Date.now() });
-    ws.send(JSON.stringify({
-        type: "name_accepted",
-        name
-    }));
 
     const joinEv = fireEvent("player.join", { name, ws });
     if (joinEv.isCancelled()) {
         clients.delete(ws);
-
-        try {
-            ws.send(JSON.stringify({
-                type: "error",
-                text: "Join cancelled by server."
-            }));
-        } catch { }
-
-        try {
-            ws.close();
-        } catch { }
-
+        kick(ws, joinEv.data.kickReason ?? "Join denied by server.");
         return false;
     }
 
