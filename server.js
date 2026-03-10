@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import * as Events from "./event.js";
 import * as Users from "./user.js";
+import * as Commands from "./command.js";
 
 const PORT = 2579;
 const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
@@ -69,6 +70,64 @@ Events.registerEvent("player.message", (ev) => {
     }
 });
 
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", (chunk) => {
+    const text = chunk.trim();
+    if (!text) return;
+
+    Commands.executeAsServer(text, Users.broadcast, (t) => console.log(`[CMD] ${t}`));
+});
+
+class ListCmd extends Commands.Command {
+    execute({ reply }, args) {
+        reply(Users.formatUserList());
+    }
+}
+
+class KickCmd extends Commands.Command {
+    canUse({ isServer }) {
+        return isServer === true;
+    }
+
+    execute({ reply }, args) {
+        if (!args[0]) {
+            reply("Usage: /kick <user> [reason]");
+            return;
+        }
+
+        const target = [...Users.getClients().entries()].find(([, info]) => info.name.toLowerCase() === args[0].toLowerCase());
+        if (!target) {
+            reply(`User not found: ${args[0]}`);
+            return;
+        }
+
+        const reason = args.slice(1).join(" ") || "You've been kicked.";
+
+        Users.kick(target[0], reason);
+        reply(`Kicked ${target[1].name}.`);
+    }
+}
+
+class StopCmd extends Commands.Command {
+    canUse({ isServer }) {
+        return isServer === true;
+    }
+
+    execute({ reply }, _args) {
+        reply("Server shutting down.");
+        Users.broadcast({
+            type: "server",
+            text: "Server is shutting down."
+        });
+
+        setTimeout(() => process.exit(0), 500);
+    }
+}
+
+Commands.registerCommand("list", new ListCmd());
+Commands.registerCommand("kick", new KickCmd());
+Commands.registerCommand("stop", new StopCmd());
+
 const server = Bun.serve({
     port: PORT,
     fetch(req, server) {
@@ -109,12 +168,13 @@ const server = Bun.serve({
             if (msg.type === "register") {
                 if (Users.getClients().has(ws)) {
                     Users.kick(ws, "Already registered.");
+
                     return;
                 }
 
-                const raw_name = (msg.name ?? "").trim();
+                const rawName = (msg.name ?? "").trim();
 
-                Users.registerClient(ws, raw_name, NAME_REGEX);
+                Users.registerClient(ws, rawName, NAME_REGEX);
                 return;
             }
 
@@ -122,6 +182,13 @@ const server = Bun.serve({
                 const client = Users.getClients().get(ws);
                 if (!client) {
                     Users.kick(ws, "Not registered.");
+                    return;
+                }
+
+                const text = msg.text ?? "";
+
+                if (text.startsWith("/")) {
+                    Commands.handleCommand(ws, client.name, text, Users.broadcast);
                     return;
                 }
 

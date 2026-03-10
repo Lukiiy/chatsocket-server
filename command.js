@@ -31,16 +31,32 @@ export function getCommand(name) {
     return commands.get(name.toLowerCase()) ?? null;
 }
 
-/**
- * Parse and dispatch a "/" message from a registered client.
- * Returns true if a command token was found (matched or not).
- */
-export function handleCommand(ws, senderName, text, channel) {
+function dispatch(ctx, text) {
     const tokens = text.trim().slice(1).split(/\s+/);
+    const cmd = commands.get(tokens[0].toLowerCase());
 
-    const ctx = {
+    if (!cmd) {
+        ctx.reply("Unknown command.");
+        return;
+    }
+
+    if (!cmd.canUse(ctx)) {
+        ctx.reply("You can't use this command.");
+        return;
+    }
+
+    try {
+        cmd.execute(ctx, tokens.slice(1));
+    } catch (err) {
+        ctx.reply(`Command error: ${err.message}`);
+    }
+}
+
+export function handleCommand(ws, senderName, text, channel) {
+    dispatch({
         ws,
         name: senderName,
+        broadcast: channel,
         reply: (t) => {
             try {
                 ws.send(JSON.stringify({
@@ -49,28 +65,13 @@ export function handleCommand(ws, senderName, text, channel) {
                 }));
             } catch { }
         },
-        broadcast: channel
-    };
+    }, text);
+}
 
-    const cmd = commands.get(tokens[0].toLowerCase());
-
-    if (!cmd) {
-        ctx.reply(`Unknown command.`);
-
-        return true;
-    }
-
-    if (!cmd.canUse(ctx)) {
-        ctx.reply("You can't use this command.");
-
-        return true;
-    }
-
-    try {
-        cmd.execute(ctx, tokens.slice(1));
-    } catch (err) {
-        ctx.reply(`Command error: ${err.message}`);
-    }
-
-    return true;
+export function executeAsServer(text, channel, reply) {
+    dispatch({
+        isServer: true,
+        broadcast: channel,
+        reply
+    }, text);
 }
