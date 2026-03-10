@@ -57,22 +57,21 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
     const name = String(raw_name ?? "").trim();
 
     if (clients.has(ws)) {
-        ws.send(JSON.stringify({
-            type: "error",
-            text: "Already registered."
-        }));
+        kick(ws, "Already registered.");
 
         return false;
     }
 
     if (name.length === 0 || !NAME_REGEX.test(name)) {
         kick(ws, "Name must be 3–24 characters and contain only letters, numbers and underscore.");
+        
         return false;
     }
 
     const taken = [...clients.values()].some((c) => c.name.toLowerCase() === name.toLowerCase());
     if (taken) {
         kick(ws, "Name already taken.");
+
         return false;
     }
 
@@ -81,6 +80,7 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
     const joinEv = fireEvent("player.join", { name, ws });
     if (joinEv.isCancelled()) {
         clients.delete(ws);
+
         kick(ws, joinEv.data.kickReason ?? "Join denied by server.");
         return false;
     }
@@ -94,6 +94,7 @@ export function unregisterClient(ws) {
 
     if (client) {
         clients.delete(ws);
+
         fireEvent("player.leave", { name: client.name });
     }
 }
