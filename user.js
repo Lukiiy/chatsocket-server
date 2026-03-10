@@ -92,6 +92,7 @@ export function registerClient(ws, raw_name, NAME_REGEX) {
         return false;
     }
 
+    sendToClient(ws, { type: "welcome" });
     sendToClient(ws, {
         type: "server",
         text: formatUserList()
