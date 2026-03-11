@@ -2,10 +2,17 @@ import { fireEvent } from "./event.js";
 
 const clients = new Map(); // websocket ( user, joinedAt )
 
+/**
+ * Get a snapshot of the clients map.
+ * @returns {Map}
+ */
 export function getClients() {
     return new Map(clients);
 }
 
+/**
+ * Get all connected users.
+ */
 export function getAllUsers() {
     return [...clients.values()];
 }
@@ -16,12 +23,24 @@ export function formatUserList() {
     return `Online (${users.length}): ${users.map(u => u.name).join(", ")}`;
 }
 
-export function broadcast(payload, exclude = null) {
-    const msg = JSON.stringify(payload);
+export function sendToClient(ws, payload) {
+    if (!ws || ws.readyState !== 1) return false;
 
-    for (const [ws] of clients) {
-        if (ws !== exclude && ws.readyState === 1) ws.send(msg);
+    try {
+        ws.send(JSON.stringify(payload));
+
+        return true;
+    } catch {
+        return false;
     }
+}
+
+/**
+ * Broadcasts a payload to all connected clients.
+ * @param {object} payload The object to serialize and send.
+ */
+export function broadcast(payload) {
+    for (const [user] of clients) sendToClient(user, payload);
 }
 
 export function kick(ws, reason = "Kicked from server.") {
@@ -37,28 +56,31 @@ export function kick(ws, reason = "Kicked from server.") {
     } catch { }
 }
 
-export function sendToClient(ws, payload) {
-    if (!ws || ws.readyState !== 1) return false;
+/**
+ * Sends a server text message to a client.
+ * @param {WebSocket|string} id Target's username or websocket.
+ * @param {string} text
+ * @returns {boolean} False if the client was not found, true otherwise.
+ */
+export function sendMessage(id, text) {
+    const payload = {
+        type: "server",
+        text
+    };
 
-    try {
-        ws.send(JSON.stringify(payload));
+    if (typeof id === "string") {
+        for (const [ws, info] of clients) {
+            if (info.name === id) return sendToClient(ws, payload);
+        }
 
-        return true;
-    } catch {
         return false;
     }
+
+    return sendToClient(id, payload);
 }
 
-export function sendMessage(name, payload) {
-    for (const [ws, info] of clients) {
-        if (info.name === name) return sendToClient(ws, payload);
-    }
-
-    return false;
-}
-
-export function registerClient(ws, raw_name, NAME_REGEX) {
-    const name = String(raw_name ?? "").trim();
+export function registerClient(ws, rawName, NAME_REGEX) {
+    const name = String(rawName ?? "").trim();
 
     if (clients.has(ws)) {
         kick(ws, "Already registered.");
