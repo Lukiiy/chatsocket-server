@@ -5,7 +5,7 @@ export class Command {
     /**
      * The method that will define what happens after running the command.
      * @param {*} ctx
-     * @param {*} args
+     * @param {string[]} args
      */
     execute(ctx, args) { }
 
@@ -23,10 +23,20 @@ export class Command {
 
 const commands = new Map();
 
+/**
+ * Register a command.
+ * @param {string} name A name for the command.
+ * @param {Command} instance A {@link Command} instance for it.
+ */
 export function registerCommand(name, instance) {
     commands.set(name.toLowerCase(), instance);
 }
 
+/**
+ * Get an already registered command.
+ * @param {string} name The command's name.
+ * @returns {Command|null} A {@link Command} instance, or null if not found.
+ */
 export function getCommand(name) {
     return commands.get(name.toLowerCase()) ?? null;
 }
