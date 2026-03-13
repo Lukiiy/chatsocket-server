@@ -1,15 +1,14 @@
 import { readFileSync } from "fs";
-import { timingSafeEqual } from "crypto";
 
 import * as Events from "./event.js";
 import * as Users from "./user.js";
 import * as Commands from "./command.js";
+import * as Protection from "./protection.js";
 
 const PORT = 2579;
 const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
 
 let badWordPatterns = [];
-let password = null;
 
 function loadBadwords() {
     try {
@@ -22,29 +21,8 @@ function loadBadwords() {
     } catch { }
 }
 
-function loadPassword() {
-    try {
-        const fromFile = readFileSync("./password.txt", "utf8").trim();
-
-        password = fromFile === "" ? null : fromFile;
-
-        if (password != null) console.log("Password protection enabled.");
-    } catch { }
-}
-
-function passwordsMatch(a, b) {
-    if (typeof a !== "string" || typeof b !== "string") return false;
-
-    const aBuf = Buffer.from(a);
-    const bBuf = Buffer.from(b);
-
-    if (aBuf.length !== bBuf.length) return false;
-
-    return timingSafeEqual(aBuf, bBuf);
-}
-
 loadBadwords();
-loadPassword();
+Protection.loadPassword();
 
 Events.registerEvent("player.join", (ev) => {
     const { name } = ev.data;
@@ -195,7 +173,11 @@ const server = Bun.serve({
             if (msg.type === "register") {
                 if (Users.getClients().has(ws)) {
                     Users.kick(ws, "Already registered.");
+                    return;
+                }
 
+                if (Protection.password != null && !Protection.checkPassword(msg.password)) {
+                    Users.kick(ws, "Invalid password.");
                     return;
                 }
 
