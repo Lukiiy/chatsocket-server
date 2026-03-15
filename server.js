@@ -30,8 +30,7 @@ Events.registerEvent("player.join", (ev) => {
     console.log(`[JOIN] ${name}`);
     Users.broadcast({
         type: "system",
-        text: `${name} has joined the channel`,
-        kind: "join",
+        text: `${name} has joined the channel`
     });
 });
 
@@ -41,8 +40,7 @@ Events.registerEvent("player.leave", (ev) => {
     console.log(`[LEAVE] ${name}`);
     Users.broadcast({
         type: "system",
-        text: `${name} has left the channel`,
-        kind: "leave",
+        text: `${name} has left the channel`
     });
 });
 

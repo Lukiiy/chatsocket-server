@@ -114,7 +114,10 @@ export function registerClient(ws, rawName, NAME_REGEX) {
         return false;
     }
 
-    sendToClient(ws, { type: "welcome" });
+    sendToClient(ws, {
+        type: "welcome"
+    });
+
     sendToClient(ws, {
         type: "server",
         text: formatUserList()
