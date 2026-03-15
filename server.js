@@ -227,4 +227,12 @@ const server = Bun.serve({
     },
 });
 
-console.log(`Server running on ws://localhost:${PORT}`);
+function formatLocalIp() {
+    let extra = Protection.password == null ? "" : Protection.password;
+
+    if (extra.trim() !== "") extra = extra + "@";
+
+    return `ws://${extra}localhost:${PORT}`;
+}
+
+console.log(`Server running on ${formatLocalIp()}`);
