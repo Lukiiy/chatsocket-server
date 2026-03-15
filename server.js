@@ -173,7 +173,7 @@ const server = Bun.serve({
                     return;
                 }
 
-                if (Protection.password != null && !Protection.checkPassword(msg.password)) {
+                if (Protection.password != null && !Protection.checkPassword(msg.extra)) {
                     Users.kick(ws, "Invalid password.");
                     return;
                 }
