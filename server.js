@@ -6,7 +6,6 @@ import * as Commands from "./command.js";
 import * as Protection from "./protection.js";
 
 const PORT = 2579;
-const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
 
 let badWordPatterns = [];
 
@@ -181,7 +180,7 @@ const server = Bun.serve({
 
                 const rawName = (msg.name ?? "").trim();
 
-                Users.registerClient(ws, rawName, NAME_REGEX);
+                Users.registerClient(ws, rawName);
                 return;
             }
 

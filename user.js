@@ -2,6 +2,8 @@ import { fireEvent } from "./event.js";
 
 const clients = new Map(); // websocket ( user, joinedAt )
 
+const NAME_REGEX = /^[A-Za-z0-9_]{3,24}$/;
+
 /**
  * Get a snapshot of the clients map.
  * @returns {Map}
@@ -79,7 +81,7 @@ export function sendMessage(id, text) {
     return sendToClient(id, payload);
 }
 
-export function registerClient(ws, rawName, NAME_REGEX) {
+export function registerClient(ws, rawName) {
     const name = String(rawName ?? "").trim();
 
     if (clients.has(ws)) {
