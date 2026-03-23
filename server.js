@@ -132,6 +132,7 @@ Commands.registerCommand("stop", new StopCmd());
 
 const server = Bun.serve({
     port: PORT,
+    hostname: "0.0.0.0",
     fetch(req, server) {
         const url = new URL(req.url);
 
