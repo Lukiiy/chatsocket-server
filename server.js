@@ -1,10 +1,11 @@
 import { readFileSync } from "fs";
 
-import * as Events from "./event.js";
-import * as Users from "./user.js";
-import * as Commands from "./command.js";
-import * as Protection from "./protection.js";
+import * as Events from "event.js";
+import * as Users from "user.js";
+import * as Commands from "command.js";
+import * as Protection from "protection.js";
 
+const IP_SCOPE = process.argv.includes("--local") ? "127.0.0.1" : "0.0.0.0";
 const PORT = 2579;
 
 let badWordPatterns = [];
@@ -117,6 +118,7 @@ class StopCmd extends Commands.Command {
 
     execute({ reply }, _args) {
         reply("Server shutting down.");
+
         Users.broadcast({
             type: "server",
             text: "Server is shutting down."
@@ -132,7 +134,7 @@ Commands.registerCommand("stop", new StopCmd());
 
 const server = Bun.serve({
     port: PORT,
-    hostname: "0.0.0.0",
+    hostname: IP_SCOPE,
     fetch(req, server) {
         const url = new URL(req.url);
 
