@@ -147,7 +147,7 @@ const server = Bun.serve({
 
         if (server.upgrade(req, { data: { name: null } })) return;
 
-        return new Response(JSON.stringify({ status: "IRC server running" }), {
+        return new Response(JSON.stringify({ status: "ChatSocket server running" }), {
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
