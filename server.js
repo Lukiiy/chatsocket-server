@@ -48,7 +48,7 @@ Events.registerEvent("player.message", (ev) => {
     let { text } = ev.data;
 
     text = text.trim().slice(0, 512);
-    text = text.replace(/<[^>]*>/g, "");
+    text = text.replace(/<[^>]*>/g, '');
 
     if (!text) {
         ev.cancel();
@@ -181,7 +181,7 @@ const server = Bun.serve({
                     return;
                 }
 
-                const rawName = (msg.name ?? "").trim();
+                const rawName = (msg.name ?? '').trim();
 
                 Users.registerClient(ws, rawName);
                 return;
@@ -194,7 +194,7 @@ const server = Bun.serve({
                     return;
                 }
 
-                const text = msg.text ?? "";
+                const text = msg.text ?? '';
 
                 if (text.startsWith("/")) {
                     Commands.handleCommand(ws, client.name, text, Users.broadcast);
@@ -203,7 +203,7 @@ const server = Bun.serve({
 
                 const evData = {
                     name: client.name,
-                    text: msg.text ?? "",
+                    text: msg.text ?? '',
                     deleted: false
                 };
 
@@ -231,9 +231,9 @@ const server = Bun.serve({
 });
 
 function formatLocalIp() {
-    let extra = Protection.password == null ? "" : Protection.password;
+    let extra = Protection.password == null ? '' : Protection.password;
 
-    if (extra.trim() !== "") extra = extra + "@";
+    if (extra.trim() !== '') extra = extra + "@";
 
     return `ws://${extra}localhost:${PORT}`;
 }

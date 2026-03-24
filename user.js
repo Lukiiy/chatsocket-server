@@ -82,7 +82,7 @@ export function sendMessage(id, text) {
 }
 
 export function registerClient(ws, rawName) {
-    const name = String(rawName ?? "").trim();
+    const name = String(rawName ?? '').trim();
 
     if (clients.has(ws)) {
         kick(ws, "Already registered.");
