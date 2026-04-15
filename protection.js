@@ -32,7 +32,7 @@ export function loadTLS() {
     if (!existsSync("./cert.pem") || !existsSync("./key.pem")) {
         console.log("Generating self-signed certificate...");
 
-        execFileSync("openssl", ["req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256", "-keyout", "key.pem", "-out", "cert.pem", "-days", "365", "-nodes", "-subj"], { stdio: "ignore" });
+        execFileSync("openssl", ["req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256", "-keyout", "key.pem", "-out", "cert.pem", "-days", "365", "-nodes", "-subj", "/CN=ChatSocket"], { stdio: "ignore" });
     }
 
     tls = {
