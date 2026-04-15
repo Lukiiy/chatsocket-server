@@ -23,6 +23,7 @@ function loadBadwords() {
 
 loadBadwords();
 Protection.loadPassword();
+Protection.loadTLS();
 
 Events.registerEvent("player.join", (ev) => {
     const { name } = ev.data;
@@ -135,6 +136,7 @@ Commands.registerCommand("stop", new StopCmd());
 const server = Bun.serve({
     port: PORT,
     hostname: IP_SCOPE,
+    tls: Protection.tls,
     fetch(req, server) {
         const url = new URL(req.url);
 
@@ -231,11 +233,12 @@ const server = Bun.serve({
 });
 
 function formatLocalIp() {
+    const encrypt = Protection.tls ? "wss" : "ws";
     let extra = Protection.password == null ? '' : Protection.password;
 
     if (extra.trim() !== '') extra = extra + "@";
 
-    return `ws://${extra}localhost:${PORT}`;
+    return `${encrypt}://${extra}localhost:${PORT}`;
 }
 
 console.log(`Server running on ${formatLocalIp()}`);
